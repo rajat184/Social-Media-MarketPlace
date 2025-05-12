@@ -1,0 +1,80 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <!-- Include the same sidebar as dashboard for consistency -->
+            <div class="card mb-4">
+                <div class="card-header">Quick Links</div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'my_posts' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-sticky-note me-1"></i> My Posts
+                    </a>
+                    <a href="{% url 'saved_posts' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-bookmark me-1"></i> Saved Items
+                    </a>
+                    <a href="{% url 'my_purchases' %}" class="list-group-item list-group-item-action active">
+                        <i class="fas fa-shopping-bag me-1"></i> My Purchases
+                    </a>
+                    <a href="{% url 'inbox' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-envelope me-1"></i> Private Messages
+                    </a>
+                    <a href="{% url 'create_group' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-users me-1"></i> Create Group Chat
+                    </a>
+                    <a href="{% url 'friend_requests' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-friends me-1"></i> Friend Requests
+                        {% if pending_requests_count > 0 %}
+                            <span class="badge bg-primary float-end">{{ pending_requests_count }}</span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'blocked_users' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-slash me-1"></i> Blocked Users
+                    </a>
+                    <a href="{% url 'profile' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-cog me-1"></i> Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <h2>My Purchases</h2>
+            <hr>
+            
+            {% if purchases %}
+                <div class="row">
+                    {% for transaction in purchases %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card">
+                                {% if transaction.post.image %}
+                                    <img src="{{ transaction.post.image.url }}" class="card-img-top" alt="{{ transaction.post.title }}">
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ transaction.post.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">Purchased for ${{ transaction.amount }}</h6>
+                                    <p class="text-muted">
+                                        <small>Purchased {{ transaction.timestamp|timesince }} ago</small>
+                                    </p>
+                                    <p>Seller: <a href="{% url 'user_profile' transaction.seller.id %}">{{ transaction.seller.username }}</a></p>
+                                    <a href="{% url 'post_detail' transaction.post.id %}" class="btn btn-primary btn-sm">View Details</a>
+                                    <a href="{% url 'message_user' transaction.seller.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-comment"></i> Contact Seller
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> You haven't purchased any items yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

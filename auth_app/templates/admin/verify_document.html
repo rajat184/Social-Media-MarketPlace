@@ -1,0 +1,84 @@
+<!-- templates/admin/verify_document.html -->
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">Verify Document</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">User Information</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Username:</strong> {{ document.user.username }}</p>
+                    <p><strong>Email:</strong> {{ document.user.email }}</p>
+                    <p><strong>Date Joined:</strong> {{ document.user.date_joined|date:"M d, Y H:i" }}</p>
+                    <p><strong>Documents Submitted:</strong> {{ document.submitted_at|date:"M d, Y H:i" }}</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Document Verification</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Verification Notes (optional):</label>
+                            <textarea name="notes" id="notes" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="action" value="verify" class="btn btn-success">
+                                <i class="fas fa-check"></i> Verify
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">ID Proof</h3>
+                </div>
+                <div class="card-body text-center">
+                    <a href="{{ document.id_proof.url }}" target="_blank">
+                        {% if document.id_proof.url|lower|slice:"-4:" in ".pdf" %}
+                            <i class="fas fa-file-pdf fa-5x text-danger"></i>
+                        {% else %}
+                            <img src="{{ document.id_proof.url }}" alt="ID Proof" class="img-fluid">
+                        {% endif %}
+                    </a>
+                    <a href="{{ document.id_proof.url }}" target="_blank" class="btn btn-primary mt-3">View Full Document</a>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">Address Proof</h3>
+                </div>
+                <div class="card-body text-center">
+                    <a href="{{ document.address_proof.url }}" target="_blank">
+                        {% if document.address_proof.url|lower|slice:"-4:" in ".pdf" %}
+                            <i class="fas fa-file-pdf fa-5x text-danger"></i>
+                        {% else %}
+                            <img src="{{ document.address_proof.url }}" alt="Address Proof" class="img-fluid">
+                        {% endif %}
+                    </a>
+                    <a href="{{ document.address_proof.url }}" target="_blank" class="btn btn-primary mt-3">View Full Document</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

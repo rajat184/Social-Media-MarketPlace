@@ -1,0 +1,89 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <!-- Navigation -->
+            <div class="mb-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Feed
+                </a>
+            </div>
+            
+            <!-- User profile header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <img src="{{ profile_user.profile.profile_picture.url|default:'https://via.placeholder.com/150' }}" 
+                                 class="rounded-circle img-fluid mb-3" alt="{{ profile_user.username }}">
+                        </div>
+                        <div class="col-md-10">
+                            <h2>
+                                {{ profile_user.username }}
+                                {% if profile_user.is_verified %}
+                                    <i class="fas fa-check-circle text-success" title="Verified Seller"></i>
+                                {% endif %}
+                            </h2>
+                            <p class="text-muted">Member since {{ profile_user.date_joined|date }}</p>
+                            
+                            {% if profile_user.id != request.user.id %}
+                            <div>
+                                <a href="{% url 'message_user' profile_user.id %}" class="btn btn-primary">
+                                    <i class="fas fa-envelope"></i> Send Message
+                                </a>
+                            </div>
+                            {% endif %}
+
+                            
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+            
+            {% if user.id != profile_user.id %}
+                <div class="mb-3">
+                    <a href="{% url 'send_friend_request' profile_user.id %}" class="btn btn-primary">Send Friend Request</a>
+                    <a href="{% url 'block_user' profile_user.id %}" class="btn btn-warning" 
+                    onclick="return confirm('Are you sure you want to block this user?')">Block User</a>
+                    <a href="{% url 'report_user' profile_user.id %}" class="btn btn-danger">Report User</a>
+                </div>
+            {% endif %}
+            <!-- User's posts -->
+            <h3 class="mb-3">Items for Sale</h3>
+            
+            <div class="row">
+                {% if user_posts %}
+                    {% for post in user_posts %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                {% if post.image %}
+                                    <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}" style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light text-center p-5">No Image</div>
+                                {% endif %}
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ post.title }}</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">${{ post.price }}</h6>
+                                    <p class="card-text">{{ post.description|truncatechars:100 }}</p>
+                                </div>
+                                <div class="card-footer">
+                                    <a href="{% url 'post_detail' post.id %}" class="btn btn-primary btn-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            This user doesn't have any items for sale yet.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

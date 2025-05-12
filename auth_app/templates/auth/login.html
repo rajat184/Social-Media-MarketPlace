@@ -1,0 +1,45 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-sm-6">
+        <h2 class="text-muted">Login</h2>
+
+        {% if form.non_field_errors %}
+        <small class="text-danger">
+            {{ form.non_field_errors.as_ul }}
+        </small>
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            <!-- ...existing code... -->
+            <!-- ...existing code... -->
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Username:</label>
+                <input type="text" name="{{ form.username.name }}" class="form-control" placeholder="Enter your Username" />
+                {% if form.username.errors %}
+                <span class="text-danger">{{ form.username.errors }}</span>
+                {% endif %}
+            </div>
+            <!-- ...existing code... -->
+
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}">Password:</label>
+                <input type="password" name="{{ form.password.name }}" class="form-control" placeholder="Enter your password" />
+                {% if form.password.errors %}
+                <span class="text-danger">{{ form.password.errors }}</span>
+                {% endif %}
+            </div>
+<!-- ...existing code... -->
+
+            <button type="submit" class="btn btn-dark">Login</button>
+
+            <a href="{% url 'register' %}" class="btn btn-default">Create a new account</a>
+            <a href="{% url 'send_otp' %}" class="btn btn-link">Forgot Password?</a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>User Reports</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if reports %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Reporter</th>
+                                <th>Reported User</th>
+                                <th>Type</th>
+                                <th>Details</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                                <tr>
+                                    <td>{{ report.reporter.username }}</td>
+                                    <td>{{ report.reported_user.username }}</td>
+                                    <td>{{ report.get_report_type_display }}</td>
+                                    <td>{{ report.details|default:"No details provided" }}</td>
+                                    <td>{{ report.created_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'handle_report' report.id %}">
+                                            {% csrf_token %}
+                                            <div class="mb-2">
+                                                <button type="submit" name="action" value="reviewed" class="btn btn-sm btn-warning">Mark Reviewed</button>
+                                            </div>
+                                            <div class="mb-2">
+                                                <button type="submit" name="action" value="resolved" class="btn btn-sm btn-success">Mark Resolved</button>
+                                            </div>
+                                            <div class="mb-2">
+                                                <button type="submit" name="action" value="dismissed" class="btn btn-sm btn-secondary">Dismiss</button>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="block_user" id="block_user_{{ report.id }}">
+                                                <label class="form-check-label" for="block_user_{{ report.id }}">
+                                                    Block user account
+                                                </label>
+                                            </div>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No pending reports to review.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

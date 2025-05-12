@@ -1,0 +1,396 @@
+{% extends 'layouts/app.html' %}
+{% block content %}
+<div class="container mt-3 mb-3">
+    <div class="row">
+        <!-- Group Members List -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">{{ group.name }}</h3>
+                    <span class="badge bg-light text-dark">{{ group.members.count }} members</span>
+                </div>
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Group Members</h6>
+                        <span class="text-muted small">Created by {{ group.created_by.username }}</span>
+                    </div>
+
+                    <ul class="list-group users-container">
+                        {% for member in group.members.all %}
+                        <li class="list-group-item d-flex align-items-center p-2 {% if member == request.user %}active-user{% endif %}">
+                            <div class="user-avatar me-2">
+                                {% if member.profile.profile_picture %}
+                                    <img src="{{ member.profile.profile_picture.url }}" alt="{{ member.username }}" class="rounded-circle">
+                                {% else %}
+                                    <div class="avatar-placeholder rounded-circle">{{ member.email|first|upper }}</div>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <strong>{{ member.email }}</strong>
+                                {% if member.username %}
+                                    <br>
+                                    <small class="text-muted">@{{ member.username }}</small>
+                                {% endif %}
+                                {% if member == group.created_by %}
+                                    <span class="badge bg-info text-white ms-1">Admin</span>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'inbox' %}" class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Chats
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-users me-2"></i> {{ group.name }} Chat
+                    </h3>
+                </div>
+                <div class="card-body messages-container" id="messagesContainer">
+                    <div class="messages-wrapper">
+                        {% for msg in messages %}
+                        <div class="message {% if msg.sender == request.user %}sent{% else %}received{% endif %}">
+                            <div class="message-header">
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar-sm me-1">
+                                        {% if msg.sender.profile.profile_picture %}
+                                            <img src="{{ msg.sender.profile.profile_picture.url }}" alt="{{ msg.sender.username }}" class="rounded-circle">
+                                        {% else %}
+                                            <div class="avatar-placeholder-sm rounded-circle">{{ msg.sender.email|first|upper }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <small class="{% if msg.sender == request.user %}text-white{% else %}text-muted{% endif %}" title="{{ msg.sender.email }}">
+                                        {% if msg.sender == request.user %}
+                                            You
+                                        {% else %}
+                                            {{ msg.sender.username|default:msg.sender.email }}
+                                        {% endif %}
+                                        – {{ msg.timestamp|date:"M d, Y H:i" }}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="message-content">
+                                {{ msg.content }}
+                            </div>
+                            
+                            {% if msg.attachments.all %}
+                                <div class="message-attachments mt-2">
+                                    {% for attachment in msg.attachments.all %}
+                                        {% if attachment.is_image %}
+                                            <div class="attachment-preview">
+                                                <a href="{{ attachment.file.url }}" target="_blank" class="attachment-link">
+                                                    <img src="{{ attachment.file.url }}" alt="Image" class="img-thumbnail">
+                                                </a>
+                                                <small class="d-block text-center">{{ attachment.filename }}</small>
+                                            </div>
+                                        {% elif attachment.is_video %}
+                                            <div class="attachment-preview">
+                                                <video controls class="img-thumbnail">
+                                                    <source src="{{ attachment.file.url }}" type="video/mp4">
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                                <small class="d-block text-center">{{ attachment.filename }}</small>
+                                            </div>
+                                        {% elif attachment.file_type == 'audio' %}
+                                            <div class="attachment-audio">
+                                                <audio controls class="w-100">
+                                                    <source src="{{ attachment.file.url }}" type="audio/mpeg">
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                                <small class="d-block text-center">{{ attachment.filename }}</small>
+                                            </div>
+                                        {% else %}
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="attachment-document d-block">
+                                                <div class="document-icon">
+                                                    <i class="fas fa-file-alt fa-2x"></i>
+                                                </div>
+                                                <div class="document-info">
+                                                    <strong>{{ attachment.filename }}</strong>
+                                                    <small>Document</small>
+                                                </div>
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted my-5">
+                            <i class="fas fa-comments fa-3x mb-3"></i>
+                            <p>No messages yet. Be the first one to say something!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <form method="POST" action="{% url 'send_group_message' group.id %}" id="messageForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="input-group mb-2">
+                            <input type="text" name="content" class="form-control" placeholder="Type your message..." required autofocus>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Send
+                            </button>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="attachment-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="imageBtn" title="Attach Image">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="videoBtn" title="Attach Video">
+                                    <i class="fas fa-video"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="audioBtn" title="Attach Audio">
+                                    <i class="fas fa-music"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="documentBtn" title="Attach Document">
+                                    <i class="fas fa-file"></i>
+                                </button>
+                            </div>
+                            <div id="attachment-preview" class="d-none">
+                                <span class="badge bg-primary" id="selected-file-name"></span>
+                                <button type="button" class="btn btn-sm btn-link text-danger" id="remove-attachment">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden file inputs -->
+                        <input type="file" name="image" id="image-upload" accept="image/*" class="d-none">
+                        <input type="file" name="video" id="video-upload" accept="video/*" class="d-none">
+                        <input type="file" name="audio" id="audio-upload" accept="audio/*" class="d-none">
+                        <input type="file" name="document" id="document-upload" class="d-none">
+                        <input type="hidden" name="attachment_type" id="attachment-type">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.messages-container {
+    height: 450px;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+.messages-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: min-content;
+    justify-content: flex-start;
+}
+.message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+.sent {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+}
+.received {
+    background-color: #f8f9fa;
+    margin-right: auto;
+}
+.message-header {
+    margin-bottom: 5px;
+    font-size: 0.8em;
+}
+.message-content {
+    font-size: 1em;
+}
+.users-container {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+.users-container::-webkit-scrollbar {
+    width: 6px;
+}
+.users-container::-webkit-scrollbar-thumb {
+    background-color: #d8d8d8;
+    border-radius: 4px;
+}
+.users-container::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+.input-group {
+    margin-bottom: 0;
+}
+
+/* User avatar styles */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.user-avatar-sm {
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.user-avatar img, .user-avatar-sm img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    background-color: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.avatar-placeholder-sm {
+    width: 24px;
+    height: 24px;
+    background-color: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7em;
+    font-weight: bold;
+}
+.active-user {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid #007bff;
+}
+
+/* Attachment styles */
+.message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.attachment-preview {
+    max-width: 200px;
+}
+.attachment-preview img, 
+.attachment-preview video {
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: cover;
+}
+.attachment-document {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+}
+.document-icon {
+    margin-right: 10px;
+    color: #6c757d;
+}
+.document-info {
+    display: flex;
+    flex-direction: column;
+}
+.attachment-audio {
+    width: 100%;
+    max-width: 300px;
+}
+</style>
+
+<script>
+// Scroll to bottom on page load
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('messagesContainer');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    }
+    
+    // Handle file attachments
+    setupAttachments();
+});
+
+// Auto-submit form when pressing Enter, but not with Shift+Enter
+document.getElementById('messageForm')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey && e.target.tagName.toLowerCase() === 'input') {
+        e.preventDefault();
+        this.submit();
+    }
+});
+
+function setupAttachments() {
+    // Image attachment
+    document.getElementById('imageBtn')?.addEventListener('click', function() {
+        document.getElementById('image-upload').click();
+    });
+    
+    // Video attachment
+    document.getElementById('videoBtn')?.addEventListener('click', function() {
+        document.getElementById('video-upload').click();
+    });
+    
+    // Audio attachment
+    document.getElementById('audioBtn')?.addEventListener('click', function() {
+        document.getElementById('audio-upload').click();
+    });
+    
+    // Document attachment
+    document.getElementById('documentBtn')?.addEventListener('click', function() {
+        document.getElementById('document-upload').click();
+    });
+    
+    // Handle file selection
+    const fileInputs = ['image-upload', 'video-upload', 'audio-upload', 'document-upload'];
+    fileInputs.forEach(inputId => {
+        document.getElementById(inputId)?.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                document.getElementById('selected-file-name').textContent = file.name;
+                document.getElementById('attachment-preview').classList.remove('d-none');
+                
+                // Set attachment type
+                const type = inputId.split('-')[0];
+                document.getElementById('attachment-type').value = type;
+                
+                // Clear other file inputs
+                fileInputs.forEach(id => {
+                    if (id !== inputId) {
+                        document.getElementById(id).value = '';
+                    }
+                });
+            }
+        });
+    });
+    
+    // Remove attachment
+    document.getElementById('remove-attachment')?.addEventListener('click', function() {
+        fileInputs.forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('attachment-type').value = '';
+        document.getElementById('attachment-preview').classList.add('d-none');
+    });
+}
+</script>
+{% endblock %}

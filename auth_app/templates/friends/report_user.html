@@ -1,0 +1,36 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Report User: {{ user_to_report.username }}</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group mb-3">
+                    <label for="report_type">Reason for Report:</label>
+                    <select name="report_type" id="report_type" class="form-control" required>
+                        <option value="">-- Select a reason --</option>
+                        <option value="spam">Spam</option>
+                        <option value="harassment">Harassment</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="impersonation">Impersonation</option>
+                        <option value="scam">Scam or Fraud</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="details">Additional Details:</label>
+                    <textarea name="details" id="details" class="form-control" rows="4" placeholder="Please provide any additional information about the issue"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-danger">Submit Report</button>
+                <a href="{% url 'user_profile' user_to_report.id %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

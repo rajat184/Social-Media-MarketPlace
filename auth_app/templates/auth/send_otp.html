@@ -1,0 +1,17 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-sm-6">
+        <h2 class="text-muted">Send OTP</h2>
+        <form method="POST" action="{% url 'send_otp' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" name="email" class="form-control" required />
+            </div>
+            <button type="submit" class="btn btn-dark">Send OTP</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+<!-- templates/upload_document.html -->
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Upload Your Documents</h1>
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_proof" class="form-label">ID Proof</label>
+            <input type="file" name="id_proof" id="id_proof" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="address_proof" class="form-label">Address Proof</label>
+            <input type="file" name="address_proof" id="address_proof" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Documents</button>
+    </form>
+</div>
+{% endblock %}
+

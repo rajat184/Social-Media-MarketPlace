@@ -1,0 +1,414 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Users List -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Users</h3>
+                    <a href="{% url 'create_group' %}" class="btn btn-sm btn-light" title="Create Group Chat">
+                        <i class="fas fa-users"></i> New Group
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="GET" class="mb-3">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search users..." value="{{ search_query }}">
+                            <button class="btn btn-outline-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <ul class="list-group users-container">
+                        {% if users %}
+                            {% for user in users %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center {% if user.id == receiver.id %}active-chat{% endif %}">
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2">
+                                        {% if user.profile.profile_picture %}
+                                            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="rounded-circle">
+                                        {% else %}
+                                            <div class="avatar-placeholder rounded-circle">{{ user.email|first|upper }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>{{ user.email }}</strong>
+                                        {% if user.username %}
+                                            <br>
+                                            <small class="text-muted">@{{ user.username }}</small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="setReceiver('{{ user.id }}')">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="list-group-item text-center text-muted">
+                                No users found
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        {% if receiver %}
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar me-2">
+                                    {% if receiver.profile.profile_picture %}
+                                        <img src="{{ receiver.profile.profile_picture.url }}" alt="{{ receiver.username }}" class="rounded-circle">
+                                    {% else %}
+                                        <div class="avatar-placeholder rounded-circle">{{ receiver.email|first|upper }}</div>
+                                    {% endif %}
+                                </div>
+                                <span>Chat with {{ receiver.email }}</span>
+                            </div>
+                        {% else %}
+                            Messages
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="card-body messages-container" id="messagesContainer">
+                    <div class="messages-wrapper">
+                        {% for message in messages %}
+                        <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                            <div class="message-header">
+                                <small class="{% if message.sender == request.user %}text-white{% else %}text-muted{% endif %}" title="{{ message.sender.email }}">
+                                    {% if message.sender == request.user %}
+                                        You
+                                    {% else %}
+                                        {{ message.sender.email }}
+                                    {% endif %}
+                                    – {{ message.timestamp|date:"M d, Y H:i" }}
+                                </small>
+                            </div>
+                            <div class="message-content">
+                                {{ message.decrypted_content|default:message.content }}
+                            </div>
+                            
+                            {% if message.attachments.all %}
+                                <div class="message-attachments mt-2">
+                                    {% for attachment in message.attachments.all %}
+                                        {% if attachment.is_image %}
+                                            <div class="attachment-preview">
+                                                <a href="{{ attachment.file.url }}" target="_blank" class="attachment-link">
+                                                    <img src="{{ attachment.file.url }}" alt="Image" class="img-thumbnail">
+                                                </a>
+                                                <small class="d-block text-center">{{ attachment.filename }}</small>
+                                            </div>
+                                        {% elif attachment.is_video %}
+                                            <div class="attachment-preview">
+                                                <video controls class="img-thumbnail">
+                                                    <source src="{{ attachment.file.url }}" type="video/mp4">
+                                                    Your browser does not support the video tag.
+                                                </video>
+                                                <small class="d-block text-center">{{ attachment.filename }}</small>
+                                            </div>
+                                        {% elif attachment.file_type == 'audio' %}
+                                            <div class="attachment-audio">
+                                                <audio controls class="w-100">
+                                                    <source src="{{ attachment.file.url }}" type="audio/mpeg">
+                                                    Your browser does not support the audio element.
+                                                </audio>
+                                                <small class="d-block text-center">{{ attachment.filename }}</small>
+                                            </div>
+                                        {% else %}
+                                            <a href="{{ attachment.file.url }}" target="_blank" class="attachment-document d-block">
+                                                <div class="document-icon">
+                                                    <i class="fas fa-file-alt fa-2x"></i>
+                                                </div>
+                                                <div class="document-info">
+                                                    <strong>{{ attachment.filename }}</strong>
+                                                    <small>Document</small>
+                                                </div>
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if receiver %}
+                    <form method="POST" action="{% url 'send_message' %}" id="messageForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="receiver" value="{{ receiver.id }}">
+                        <div class="input-group mb-2">
+                            <input type="text" name="content" class="form-control" placeholder="Type your message..." required>
+                            <button type="submit" class="btn btn-primary">Send</button>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="attachment-buttons">
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="imageBtn" title="Attach Image">
+                                    <i class="fas fa-image"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="videoBtn" title="Attach Video">
+                                    <i class="fas fa-video"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="audioBtn" title="Attach Audio">
+                                    <i class="fas fa-music"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary me-1" id="documentBtn" title="Attach Document">
+                                    <i class="fas fa-file"></i>
+                                </button>
+                            </div>
+                            <div id="attachment-preview" class="d-none">
+                                <span class="badge bg-primary" id="selected-file-name"></span>
+                                <button type="button" class="btn btn-sm btn-link text-danger" id="remove-attachment">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden file inputs -->
+                        <input type="file" name="image" id="image-upload" accept="image/*" class="d-none">
+                        <input type="file" name="video" id="video-upload" accept="video/*" class="d-none">
+                        <input type="file" name="audio" id="audio-upload" accept="audio/*" class="d-none">
+                        <input type="file" name="document" id="document-upload" class="d-none">
+                        <input type="hidden" name="attachment_type" id="attachment-type">
+                    </form>
+                    {% else %}
+                        <p class="text-muted">Select a user to start chatting.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.col-md-8 {
+    max-height: 90%;
+    width: 100%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.col-md-4 {
+    max-height: 90%;
+    width: 30%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.messages-container {
+    height: 75vh;
+    overflow-y: auto;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+.messages-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: min-content;
+    justify-content: flex-start;
+}
+.message {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 10px;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+.sent {
+    background-color: #007bff;
+    color: white;
+    margin-left: auto;
+}
+.received {
+    background-color: #f8f9fa;
+    margin-right: auto;
+}
+.message-header {
+    margin-bottom: 5px;
+    font-size: 0.8em;
+}
+.message-content {
+    font-size: 1em;
+}
+.users-container {
+    max-height: 75vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+.users-container::-webkit-scrollbar {
+    width: 6px;
+}
+.users-container::-webkit-scrollbar-thumb {
+    background-color: #d8d8d8;
+    border-radius: 4px;
+}
+.users-container::-webkit-scrollbar-track {
+    background-color: #f1f1f1;
+}
+.input-group {
+    margin-bottom: 0;
+}
+.container {
+    margin-top: 20px;
+}
+
+/* User avatar styles */
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.avatar-placeholder {
+    width: 32px;
+    height: 32px;
+    background-color: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.active-chat {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: 3px solid #007bff;
+}
+
+/* Attachment styles */
+.message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.attachment-preview {
+    max-width: 200px;
+}
+.attachment-preview img, 
+.attachment-preview video {
+    max-width: 100%;
+    max-height: 150px;
+    object-fit: cover;
+}
+.attachment-document {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    text-decoration: none;
+    color: inherit;
+}
+.document-icon {
+    margin-right: 10px;
+    color: #6c757d;
+}
+.document-info {
+    display: flex;
+    flex-direction: column;
+}
+.attachment-audio {
+    width: 100%;
+    max-width: 300px;
+}
+</style>
+
+<script>
+function setReceiver(id) {
+    const search = new URLSearchParams(window.location.search);
+    search.set("receiver", id);
+    window.location.search = search.toString();
+}
+
+// Scroll to bottom on page load
+document.addEventListener('DOMContentLoaded', function () {
+    const container = document.getElementById('messagesContainer');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+        setTimeout(() => {
+            container.scrollTop = container.scrollHeight;
+        }, 100);
+    }
+    
+    // Handle file attachments
+    setupAttachments();
+});
+
+function setupAttachments() {
+    // Image attachment
+    document.getElementById('imageBtn')?.addEventListener('click', function() {
+        document.getElementById('image-upload').click();
+    });
+    
+    // Video attachment
+    document.getElementById('videoBtn')?.addEventListener('click', function() {
+        document.getElementById('video-upload').click();
+    });
+    
+    // Audio attachment
+    document.getElementById('audioBtn')?.addEventListener('click', function() {
+        document.getElementById('audio-upload').click();
+    });
+    
+    // Document attachment
+    document.getElementById('documentBtn')?.addEventListener('click', function() {
+        document.getElementById('document-upload').click();
+    });
+    
+    // Handle file selection
+    const fileInputs = ['image-upload', 'video-upload', 'audio-upload', 'document-upload'];
+    fileInputs.forEach(inputId => {
+        document.getElementById(inputId)?.addEventListener('change', function(e) {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                document.getElementById('selected-file-name').textContent = file.name;
+                document.getElementById('attachment-preview').classList.remove('d-none');
+                
+                // Set attachment type
+                const type = inputId.split('-')[0];
+                document.getElementById('attachment-type').value = type;
+                
+                // Clear other file inputs
+                fileInputs.forEach(id => {
+                    if (id !== inputId) {
+                        document.getElementById(id).value = '';
+                    }
+                });
+            }
+        });
+    });
+    
+    // Remove attachment
+    document.getElementById('remove-attachment')?.addEventListener('click', function() {
+        fileInputs.forEach(id => {
+            document.getElementById(id).value = '';
+        });
+        document.getElementById('attachment-type').value = '';
+        document.getElementById('attachment-preview').classList.add('d-none');
+    });
+    
+    // Auto-submit form when pressing Enter (but not with Shift+Enter for multi-line)
+    document.querySelector('input[name="content"]')?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            document.getElementById('messageForm').submit();
+        }
+    });
+}
+</script>
+{% endblock %}

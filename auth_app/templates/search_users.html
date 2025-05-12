@@ -1,0 +1,60 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Navigation -->
+            <div class="mb-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+            
+            <!-- Search form -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" action="{% url 'search_users' %}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="q" value="{{ query }}" placeholder="Search users by name or email...">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Search results -->
+            <h3 class="mb-3">Search Results</h3>
+            
+            {% if users %}
+                <div class="list-group">
+                    {% for user in users %}
+                        <a href="{% url 'user_profile' user.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 align-items-center">
+                                <img src="{{ user.profile.profile_picture.url|default:'https://via.placeholder.com/40' }}" 
+                                     class="rounded-circle me-3" width="40" height="40" alt="{{ user.username }}">
+                                <div>
+                                    <h5 class="mb-1">{{ user.username }}</h5>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </div>
+                            </div>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {% if query %}
+                    <div class="alert alert-info">
+                        No users found matching "{{ query }}".
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        Enter a name or email to search for users.
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

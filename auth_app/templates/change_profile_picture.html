@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Profile Picture</title>
+</head>
+<body>
+    <h1>Change Your Profile Picture</h1>
+    <form action="{% url 'change_profile_picture' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="profile_picture">Change Profile Picture:</label>
+        <input type="file" name="profile_picture" id="profile_picture">
+        <button type="submit">Upload</button>
+    </form>
+</body>
+</html>

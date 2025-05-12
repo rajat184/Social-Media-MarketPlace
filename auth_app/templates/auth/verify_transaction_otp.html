@@ -1,0 +1,102 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-sm-6">
+        <h2 class="text-muted">Verify Transaction</h2>
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Enter the OTP sent to your email address to complete your purchase.
+        </div>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+
+            <!-- OTP Input (virtual keyboard only) -->
+            <div class="form-group">
+                <label for="otp">Enter OTP:</label>
+                <input 
+                    type="text" 
+                    id="otp" 
+                    name="otp" 
+                    class="form-control text-center" 
+                    maxlength="6" 
+                    readonly 
+                    required 
+                    onpaste="return false;"
+                />
+            </div>
+
+            <!-- Virtual Keyboard -->
+            <div class="keypad mb-4 text-center">
+                <div class="d-flex flex-wrap justify-content-center gap-2">
+                    {% for num in "123456789" %}
+                        <button type="button" class="btn btn-outline-secondary keypad-btn" onclick="addDigit('{{ num }}')">{{ num }}</button>
+                    {% endfor %}
+                    <button type="button" class="btn btn-warning keypad-btn" onclick="deleteDigit()">←</button>
+                    <button type="button" class="btn btn-outline-secondary keypad-btn" onclick="addDigit('0')">0</button>
+                    <button type="button" class="btn btn-danger keypad-btn" onclick="clearInput()">C</button>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check-circle"></i> Verify & Complete Purchase
+                </button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-danger">
+                    <i class="fas fa-times-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Virtual Keypad Logic -->
+<script>
+    const otpInput = document.getElementById('otp');
+
+    function addDigit(digit) {
+        if (otpInput.value.length < 6) {
+            otpInput.value += digit;
+        }
+    }
+
+    function deleteDigit() {
+        otpInput.value = otpInput.value.slice(0, -1);
+    }
+
+    function clearInput() {
+        otpInput.value = '';
+    }
+
+    // Optional: block all physical keyboard input
+    document.addEventListener('keydown', function(e) {
+        if (document.activeElement === otpInput) {
+            e.preventDefault();
+        }
+    });
+
+    // Block mouse pasting
+    otpInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+    });
+</script>
+
+<!-- Styling -->
+<style>
+    .keypad-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 1.25rem;
+        border-radius: 8px;
+    }
+
+    #otp {
+        pointer-events: none;
+        user-select: none;
+        font-size: 1.5rem;
+        letter-spacing: 6px;
+        background-color: #f9f9f9;
+    }
+</style>
+{% endblock %}

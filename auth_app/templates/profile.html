@@ -1,0 +1,110 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+</head>
+<body>
+    <h1>Hello, {{ request.user.username }} </h1>
+    
+    <div class="container py-5">
+        <div class="row">
+            <!-- Left Column - Profile Picture and Basic Info -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="mb-3">
+                            {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" 
+                                class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                            <img src="/static/default-profile.png" alt="Default Profile Picture" 
+                                class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;">
+                            {% endif %}
+                        </div>
+                        <h3 class="mb-3">{{ request.user.username }}</h3>
+                        <p class="text-muted">{{ request.user.email }}</p>
+                        
+                        <!-- Messages Button -->
+                        <a href="{% url 'inbox' %}" class="btn btn-primary mb-2 w-100">
+                            <i class="fas fa-envelope"></i> Messages
+                            {% if unread_messages_count > 0 %}
+                            <span class="badge bg-danger">{{ unread_messages_count }}</span>
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Forms and Actions -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">Profile Settings</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Profile Picture Form -->
+                        <form action="{% url 'change_profile_picture' %}" method="post" 
+                            enctype="multipart/form-data" class="mb-4">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="profile_picture" class="form-label">Change Profile Picture:</label>
+                                <input type="file" name="profile_picture" id="profile_picture" 
+                                    class="form-control" accept="image/*">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload Picture</button>
+                        </form>
+
+                        <hr>
+
+                        <!-- Username Form -->
+                        <form action="{% url 'change_username' %}" method="post" class="mb-4">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Change Username:</label>
+                                <input type="text" name="username" id="username" 
+                                    value="{{ request.user.username }}" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Update Username</button>
+                        </form>
+
+                        <hr>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                            <a href="{% url 'logout' %}" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .card-header {
+        background-color: #f8f9fa;
+    }
+    .btn {
+        border-radius: 5px;
+    }
+    .btn i {
+        margin-right: 5px;
+    }
+    </style>
+
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+
+            <!-- Back to Feed -->
+            <div class="mb-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Feed
+                </a>
+            </div>
+
+            <!-- Post Card -->
+            <div class="card mb-4">
+                {% if post.image %}
+                <img src="{{ post.image.url }}" class="card-img-top" alt="{{ post.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h2 class="card-title">{{ post.title }}</h2>
+                    <h4 class="text-primary">${{ post.price }}</h4>
+
+                    <div class="d-flex align-items-center mb-3">
+                        <a href="{% url 'user_profile' post.user.id %}" class="text-decoration-none">
+                            <img src="{{ post.user.profile.profile_picture.url|default:'https://via.placeholder.com/30' }}"
+                                 class="rounded-circle me-2" width="30">
+                            <strong>{{ post.user.username }}</strong>
+                            {% if post.user.is_verified %}
+                                <i class="fas fa-check-circle text-success ms-1" title="Verified Seller"></i>
+                            {% endif %}
+                        </a>
+                        <span class="text-muted ms-2">{{ post.created_at|timesince }} ago</span>
+                    </div>
+
+                    <p class="card-text">{{ post.description }}</p>
+
+                    <div class="d-flex mt-3">
+                        <a href="{% url 'message_user' post.user.id %}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-envelope"></i> Message Seller
+                        </a>
+                        <a href="{% url 'user_profile' post.user.id %}" class="btn btn-primary me-2">
+                            <i class="fas fa-user"></i> View Profile
+                        </a>
+                        <form action="{% url 'save_post' post.id %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn {% if post.id in saved_post_ids %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                                {% if post.id in saved_post_ids %}
+                                    <i class="fas fa-bookmark"></i> Saved
+                                {% else %}
+                                    <i class="far fa-bookmark"></i> Save
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="card">
+                <div class="card-header">
+                    Comments ({{ post.comments.count }})
+                </div>
+                <div class="card-body">
+                    <!-- Add Comment -->
+                    {% if user.is_authenticated %}
+                    <form action="{% url 'add_comment' post.id %}" method="POST" class="mb-4">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <input type="text" name="content" class="form-control" placeholder="Write a comment..." required>
+                            <button class="btn btn-primary" type="submit">Post</button>
+                        </div>
+                    </form>
+                    {% else %}
+                    <p><a href="{% url 'login' %}?next={{ request.path }}">Log in</a> to post a comment.</p>
+                    {% endif %}
+
+                    <!-- Existing Comments -->
+                    {% for comment in post.comments.all %}
+                    <div class="mb-3 border-bottom pb-2">
+                        <div class="d-flex align-items-center mb-2">
+                            <img src="{{ comment.user.profile.profile_picture.url|default:'https://via.placeholder.com/30' }}"
+                                 class="rounded-circle me-2" width="30" height="30">
+                            <strong>{{ comment.user.username }}</strong>
+                            <span class="ms-2 text-muted small">{{ comment.created_at|timesince }} ago</span>
+                        </div>
+                        <p class="mb-1">{{ comment.content }}</p>
+                        {% if comment.user == user %}
+                        <form method="post" action="{% url 'delete_comment' comment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0">Delete</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No comments yet. Be the first to comment.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'layouts/app.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Blocked Users</h2>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if blocked_users %}
+                <ul class="list-group">
+                    {% for block in blocked_users %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ block.blocked.username }}
+                            <form method="post" action="{% url 'unblock_user' block.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-warning">Unblock</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>You haven't blocked any users.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

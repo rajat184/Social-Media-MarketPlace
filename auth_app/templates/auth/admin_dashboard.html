@@ -1,0 +1,99 @@
+<!-- filepath: /c:/Users/Suraj/Downloads/django-auth-project-main/auth_app/templates/auth/admin_dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="admin_dashboard.css">
+</head>
+<body>
+    {% extends 'layouts/app.html' %}
+
+    {% block content %}
+    <div class="container">
+        <h1 class="mb-4">Admin Dashboard</h1>
+        
+        <!-- Users Tab -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Registered Users</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Date Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.date_joined|date:"M d, Y H:i" }}</td>
+                                    <td>
+                                        {% if user.auth_app_document %}
+                                            <span class="badge {% if user.auth_app_document.status == 'verified' %}bg-success{% elif user.auth_app_document.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                {{ user.auth_app_document.status|title }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No Documents</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.auth_app_document and user.auth_app_document.status == 'pending' %}
+                                        <a href="{% url 'verify_document' user.auth_app_document.id %}" class="btn btn-sm btn-primary">Review</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending Documents Tab -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h3 class="mb-0">Pending Document Verification</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if pending_documents %}
+                        <div class="list-group">
+                            {% for document in pending_documents %}
+                            <div class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h5 class="mb-1">{{ document.user.username }}</h5>
+                                    <small>{{ document.submitted_at|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <p class="mb-1">Email: {{ document.user.email }}</p>
+                                <div class="d-flex mt-2">
+                                    <a href="{{ document.id_proof.url }}" target="_blank" class="btn btn-sm btn-info me-2">View ID Proof</a>
+                                    <a href="{{ document.address_proof.url }}" target="_blank" class="btn btn-sm btn-info me-2">View Address Proof</a>
+                                    <a href="{% url 'verify_document' document.id %}" class="btn btn-sm btn-primary">Review</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-center">No pending documents for verification.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>
