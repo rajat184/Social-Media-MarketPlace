@@ -43,3 +43,6 @@ A full-stack social media marketplace web application where users can register, 
 ```bash
 git clone https://github.com/rajat184/Social-Media-MarketPlace.git
 cd Social-Media-MarketPlace
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
